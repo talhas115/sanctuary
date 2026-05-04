@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "HDIAuxdc3uQKZ/svZR+HpPxx5f78mFFYe96VsKQnJ4A=",
+  "Source": "PersonalJournal.API",
+  "BasePath": "_content/PersonalJournal.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

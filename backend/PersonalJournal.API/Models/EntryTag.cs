@@ -1,0 +1,12 @@
+using System;
+
+namespace PersonalJournal.API.Models
+{
+    public class EntryTag
+    {
+        public Guid EntryId { get; set; }
+        public Entry Entry { get; set; } = null!;
+        public Guid TagId { get; set; }
+        public Tag Tag { get; set; } = null!;
+    }
+}

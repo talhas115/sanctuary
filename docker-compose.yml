@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: journal_user
+      POSTGRES_PASSWORD: journal_password
+      POSTGRES_DB: journal_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: PersonalJournal.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=journal_db;Username=journal_user;Password=journal_password
+      - JwtSettings__Secret=SuperSecretKeyForPersonalJournalAppNeedToBeLongEnough
+      - JwtSettings__Issuer=PersonalJournalApp
+      - JwtSettings__Audience=PersonalJournalUsers
+      - JwtSettings__ExpirationInMinutes=1440
+    ports:
+      - "5000:8080"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

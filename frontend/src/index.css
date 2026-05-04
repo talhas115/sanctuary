@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  /* Stitch Design System: Serene Narrative */
+  --color-primary: #4648D4;
+  --color-on-primary: #FFFFFF;
+  
+  --color-surface: #FFFFFF;
+  --color-on-surface: #1B1B23;
+  --color-surface-variant: #F5F2FE;
+  --color-on-surface-variant: #64748B; /* slightly muted gray */
+  --color-background: #F8F9FB; /* explicitly slightly gray */
+  
+  --color-outline: #E2E8F0;
+  --color-outline-variant: #CBD5E1;
+
+  --color-error: #BA1A1A;
+  --color-on-error: #FFFFFF;
+
+  --font-inter: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Radius Tokens */
+  --radius-cards: 16px;
+  --radius-buttons: 8px;
+
+  /* Elevation */
+  --shadow-subtle: 0px 2px 4px rgba(0, 0, 0, 0.02), 0px 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0px 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .writing-column {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  @apply outline-none min-h-[500px] text-[18px] leading-[1.75];
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-on-surface-variant);
+  pointer-events: none;
+  height: 0;
+}

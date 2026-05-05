@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Lock, 
-  Download, 
-  Palette, 
-  FileText, 
+import {
+  User,
+  Lock,
+  Download,
+  FileText,
   Code,
-  Sun,
-  Moon,
   Check,
   LogOut,
   Loader2,
@@ -15,329 +12,324 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Shield,
+  Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { useThemeStore } from '../store/themeStore';
 import api from '../services/api';
-
-/**
- * Stitch Settings UI - Replicated exactly as a card-based dashboard.
- * Corrected: API routes mapped correctly to backend AuthController.
- * Added: Conditional password visibility (hidden by default).
- */
 
 const Settings = () => {
   const { user, logout, updateUser } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
-  
-  // Local states for inputs
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [defaultEncryption, setDefaultEncryption] = useState(user?.defaultEncryption || false);
-  const [newPassword, setNewPassword] = useState('');
-  const [showPasswordText, setShowPasswordText] = useState(false); // Visibility of text inside input
-  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false); // Toggle the whole password field
-  
-  // UI States
-  const [isSaving, setIsSaving] = useState(false);
-  const [isChangingPass, setIsChangingPass] = useState(false);
-  const [exportLoading, setExportLoading] = useState(null); // 'pdf' or 'html'
-  const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
 
-  // Auto-clear feedback after 4 seconds
+  const [displayName,       setDisplayName]       = useState(user?.displayName || '');
+  const [email,             setEmail]             = useState(user?.email || '');
+  const [defaultEncryption, setDefaultEncryption] = useState(user?.defaultEncryption || false);
+  const [newPassword,       setNewPassword]       = useState('');
+  const [showPasswordText,  setShowPasswordText]  = useState(false);
+  const [isPasswordOpen,    setIsPasswordOpen]    = useState(false);
+
+  const [isSaving,      setIsSaving]      = useState(false);
+  const [isChangingPass,setIsChangingPass] = useState(false);
+  const [exportLoading, setExportLoading] = useState(null);
+  const [feedback,      setFeedback]      = useState(null);
+
   const showFeedback = (type, message) => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  // Handle Profile Update
   const handleSaveProfile = async () => {
-    if (!displayName || !email) {
-      showFeedback('error', 'Name and Email are required.');
-      return;
-    }
-    
+    if (!displayName || !email) { showFeedback('error', 'Name and Email are required.'); return; }
     setIsSaving(true);
     try {
-      // Backend: AuthController [Route("api/[controller]")] + [HttpPut("profile")] -> /api/auth/profile
       await api.put('/auth/profile', { displayName, email, defaultEncryption });
       updateUser({ displayName, email, defaultEncryption });
       showFeedback('success', 'Profile updated successfully!');
     } catch (err) {
-      console.error('Failed to update profile', err);
       showFeedback('error', err.response?.data?.message || 'Failed to update profile.');
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
-  // Handle Password Change
   const handleChangePassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      showFeedback('error', 'Password must be at least 6 characters.');
-      return;
-    }
-    
+    if (!newPassword || newPassword.length < 6) { showFeedback('error', 'Password must be at least 6 characters.'); return; }
     setIsChangingPass(true);
     try {
-      // Backend: AuthController [Route("api/[controller]")] + [HttpPost("change-password")] -> /api/auth/change-password
       await api.post('/auth/change-password', { newPassword });
       setNewPassword('');
-      setIsPasswordFormOpen(false);
+      setIsPasswordOpen(false);
       showFeedback('success', 'Password updated successfully!');
     } catch (err) {
-      console.error('Failed to change password', err);
       showFeedback('error', err.response?.data?.message || 'Failed to update password.');
-    } finally {
-      setIsChangingPass(false);
-    }
+    } finally { setIsChangingPass(false); }
   };
 
-  // Handle Journal Export
   const handleExport = async (format) => {
-    // Basic confirmation for large datasets (simplified check)
-    if (user?.entryCount > 500) {
-      if (!window.confirm('You have a large journal. The export might take a minute. Continue?')) return;
-    }
-
     setExportLoading(format);
-    showFeedback('success', `Starting ${format.toUpperCase()} export... Please wait.`);
-    
+    showFeedback('success', `Starting ${format.toUpperCase()} export…`);
     try {
-      // Backend: ExportController [Route("api/[controller]")] -> api/export
-      const response = await api.get(`/export?format=${format}`, { 
-        responseType: 'blob',
-        timeout: 60000 // 1 minute timeout for large exports
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const response = await api.get(`/export?format=${format}`, { responseType: 'blob', timeout: 60000 });
+      const url  = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `my_journal_export_${new Date().toISOString().split('T')[0]}.${format}`);
+      link.setAttribute('download', `my_journal_${new Date().toISOString().split('T')[0]}.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       showFeedback('success', `Export as ${format.toUpperCase()} complete!`);
-    } catch (err) {
-      console.error(`Failed to export as ${format}`, err);
+    } catch {
       showFeedback('error', `Failed to export as ${format.toUpperCase()}. Please try again.`);
-    } finally {
-      setExportLoading(null);
-    }
+    } finally { setExportLoading(null); }
   };
 
+  /* Avatar initials */
+  const initials = displayName.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
+
   return (
-    <div className="h-full overflow-y-auto px-6 py-10 lg:px-12 bg-[#F9FAFB] animate-in fade-in duration-700 relative">
-      
-      {/* ── GLOBAL FEEDBACK POPUP ── */}
+    <div className="h-full overflow-y-auto bg-[#F4F5FA] animate-in fade-in duration-500">
+
+      {/* ── TOAST ── */}
       {feedback && (
-        <div className={`fixed top-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-elevated border animate-in slide-in-from-top-4 duration-300 ${
-          feedback.type === 'success' 
-            ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-            : 'bg-rose-50 border-rose-100 text-rose-700'
+        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border animate-in slide-in-from-top-4 duration-300 ${
+          feedback.type === 'success'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            : 'bg-rose-50 border-rose-200 text-rose-700'
         }`}>
-          {feedback.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span className="font-bold text-sm tracking-tight">{feedback.message}</span>
+          {feedback.type === 'success' ? <Check className="w-4 h-4 flex-shrink-0"/> : <AlertCircle className="w-4 h-4 flex-shrink-0"/>}
+          <span className="font-bold text-sm">{feedback.message}</span>
         </div>
       )}
 
-      <div className="w-full max-w-[900px] mx-auto space-y-8 pb-20">
-        
-        <header className="mb-10">
-          <h1 className="text-[32px] font-bold text-on-surface tracking-tight">Settings</h1>
-          <p className="text-on-surface-variant text-[16px]">Customize your sanctuary experience.</p>
-        </header>
+      {/* ── HERO HEADER ── */}
+      <div
+        className="relative overflow-hidden px-6 py-8 lg:px-12 lg:py-10"
+        style={{ background: 'linear-gradient(135deg, #2A2DC0 0%, #4648D4 55%, #7B6EF5 100%)' }}
+      >
+        {/* Dot texture */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.05,
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+        }}/>
+        <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '240px', height: '240px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', filter: 'blur(40px)' }}/>
 
-        {/* ── 1. ACCOUNT INFO SECTION ── */}
-        <section className="bg-white rounded-[24px] border border-outline/30 shadow-subtle p-8 space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary text-xl font-bold">
-                {displayName.charAt(0) || 'U'}
-              </div>
-              <div>
-                <h2 className="text-[20px] font-bold text-on-surface leading-tight">{displayName || 'Journal User'}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-on-surface-variant">{email}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black tracking-widest uppercase border border-amber-100">
-                    Premium Member
-                  </span>
-                </div>
-              </div>
-            </div>
-            <button 
-              onClick={logout}
-              className="p-2.5 rounded-full hover:bg-error/5 text-error/60 hover:text-error transition-all"
-              title="Sign Out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+        <div className="relative z-10 flex items-center gap-5">
+          {/* Avatar */}
+          <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white text-xl font-black flex-shrink-0">
+            {initials}
           </div>
+          <div className="min-w-0">
+            <p className="text-white/55 text-[10px] font-black uppercase tracking-[0.2em] mb-0.5">Your Account</p>
+            <h1 className="text-white text-[22px] lg:text-[28px] font-black tracking-tight truncate">{displayName || 'Journal User'}</h1>
+            <p className="text-white/55 text-[13px] truncate">{email}</p>
+          </div>
+          <button
+            onClick={logout}
+            title="Sign Out"
+            className="ml-auto flex-shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/15 text-white text-[12px] font-bold px-4 py-2 rounded-full transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5"/>
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-black text-on-surface-variant/50 tracking-widest uppercase px-1">Display Name</label>
-              <input 
-                type="text" 
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-xl bg-surface-variant/30 border border-outline/10 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none"
-              />
+      {/* ── CONTENT ── */}
+      <div className="max-w-[860px] mx-auto px-5 py-8 lg:px-8 lg:py-10 space-y-6 pb-20">
+
+        {/* ── 1. PROFILE ── */}
+        <section className="bg-white rounded-2xl border border-outline/20 shadow-sm overflow-hidden">
+          {/* Section label */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-outline/10">
+            <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center">
+              <User className="w-4 h-4 text-primary"/>
             </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-black text-on-surface-variant/50 tracking-widest uppercase px-1">Email Address</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-xl bg-surface-variant/30 border border-outline/10 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none"
-              />
+            <div>
+              <h2 className="text-[14px] font-black text-on-surface">Profile</h2>
+              <p className="text-[12px] text-on-surface-variant/60">Update your display name and email.</p>
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
-            <button 
-              onClick={handleSaveProfile}
-              disabled={isSaving}
-              className="bg-primary text-white px-8 py-3.5 rounded-full font-bold shadow-sm hover:shadow-elevated transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Save Changes
-            </button>
+          <div className="px-6 py-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-on-surface-variant/50 tracking-widest uppercase">Display Name</label>
+                <input
+                  type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F4F5FA] border border-outline/15 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none text-[14px]"
+                  placeholder="Your name"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-on-surface-variant/50 tracking-widest uppercase">Email Address</label>
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#F4F5FA] border border-outline/15 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none text-[14px]"
+                  placeholder="your@email.com"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveProfile} disabled={isSaving}
+                className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full text-[13px] font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Check className="w-3.5 h-3.5"/>}
+                Save Profile
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* ── 2. SECURITY SECTION ── */}
-        <section className="bg-white rounded-[24px] border border-outline/30 shadow-subtle p-8">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="text-[18px] font-bold text-on-surface">Security</h3>
-              <p className="text-[14px] text-on-surface-variant">Update your account password regularly.</p>
+        {/* ── 2. SECURITY ── */}
+        <section className="bg-white rounded-2xl border border-outline/20 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-outline/10">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-rose-500"/>
             </div>
-            <button 
-              onClick={() => setIsPasswordFormOpen(!isPasswordFormOpen)}
-              className={`flex items-center gap-2 px-6 py-2 rounded-full border border-outline text-[13px] font-bold text-on-surface hover:bg-surface-variant transition-all ${isPasswordFormOpen ? 'bg-surface-variant' : ''}`}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[14px] font-black text-on-surface">Security</h2>
+              <p className="text-[12px] text-on-surface-variant/60">Manage your password and encryption preferences.</p>
+            </div>
+            <button
+              onClick={() => setIsPasswordOpen(v => !v)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-[12px] font-bold transition-all flex-shrink-0 ${isPasswordOpen ? 'bg-surface-variant border-outline/20 text-on-surface' : 'border-outline/20 text-on-surface-variant hover:border-primary/30 hover:text-primary'}`}
             >
-              Update Password
-              {isPasswordFormOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              Change Password
+              {isPasswordOpen ? <ChevronUp className="w-3.5 h-3.5"/> : <ChevronDown className="w-3.5 h-3.5"/>}
             </button>
           </div>
-          
-          {isPasswordFormOpen && (
-            <div className="mt-8 bg-surface-variant/20 p-6 rounded-2xl border border-outline/5 space-y-4 animate-in slide-in-from-top-2 duration-300">
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-on-surface-variant/50 tracking-widest uppercase px-1">New Password</label>
-                <div className="flex flex-col sm:flex-row gap-4">
+
+          <div className="px-6 py-6 space-y-5">
+            {/* Password form */}
+            {isPasswordOpen && (
+              <div className="bg-[#F4F5FA] rounded-xl p-5 border border-outline/10 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                <label className="text-[10px] font-black text-on-surface-variant/50 tracking-widest uppercase">New Password</label>
+                <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <input 
-                      type={showPasswordText ? "text" : "password"} 
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
-                      className="w-full h-12 bg-white px-5 pr-12 rounded-xl border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none"
+                    <input
+                      type={showPasswordText ? 'text' : 'password'}
+                      value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Min. 6 characters"
+                      className="w-full h-11 bg-white px-4 pr-11 rounded-xl border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-on-surface font-medium outline-none text-[14px]"
                     />
-                    <button 
-                      onClick={() => setShowPasswordText(!showPasswordText)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-primary transition-colors"
+                    <button
+                      onClick={() => setShowPasswordText(v => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-primary transition-colors"
                     >
-                      {showPasswordText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPasswordText ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                     </button>
                   </div>
-                  <button 
-                    onClick={handleChangePassword}
-                    disabled={isChangingPass || !newPassword}
-                    className="bg-on-surface text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all disabled:opacity-30 whitespace-nowrap"
+                  <button
+                    onClick={handleChangePassword} disabled={isChangingPass || !newPassword}
+                    className="h-11 px-6 bg-on-surface text-white rounded-xl text-[13px] font-bold hover:bg-black transition-all disabled:opacity-30 whitespace-nowrap flex items-center gap-2"
                   >
-                    {isChangingPass ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Update'}
+                    {isChangingPass ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : null}
+                    Apply
                   </button>
                 </div>
-                <p className="text-[11px] text-on-surface-variant/60 px-1 italic">Min. 6 characters required.</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── NEW: ENCRYPTION PREFERENCE TOGGLE ── */}
-          <div className="mt-8 pt-8 border-t border-outline/10 flex items-center justify-between">
-            <div className="flex items-start gap-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${defaultEncryption ? 'bg-primary/10 text-primary' : 'bg-surface-variant text-on-surface-variant/60'}`}>
-                <Lock className="w-5 h-5" />
+            {/* Encryption toggle */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${defaultEncryption ? 'bg-primary/10' : 'bg-surface-variant'}`}>
+                  <Lock className={`w-4 h-4 ${defaultEncryption ? 'text-primary' : 'text-on-surface-variant/50'}`}/>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-bold text-on-surface">Auto-Encrypt New Entries</p>
+                  <p className="text-[12px] text-on-surface-variant/60 leading-tight">New entries will default to client-side encryption.</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h4 className="text-[15px] font-bold text-on-surface">Auto-Encrypt New Entries</h4>
-                <p className="text-[13px] text-on-surface-variant leading-tight max-w-[400px]">
-                  When enabled, all new journal entries will default to client-side encryption.
-                </p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setDefaultEncryption(!defaultEncryption)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${defaultEncryption ? 'bg-primary' : 'bg-outline/30'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${defaultEncryption ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-        </section>
-
-        {/* ── 3. PREFERENCES SECTION ── */}
-        <section className="bg-white rounded-[24px] border border-outline/30 shadow-subtle p-8">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="text-[16px] font-bold text-on-surface">Appearance</h3>
-              <p className="text-[14px] text-on-surface-variant">Choose your preferred visual theme.</p>
-            </div>
-            
-            <div className="flex items-center bg-surface-variant/50 rounded-full p-1 border border-outline/10">
-              <button 
-                onClick={() => theme === 'dark' && toggleTheme()}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all ${theme === 'light' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+              <button
+                onClick={() => setDefaultEncryption(v => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none ${defaultEncryption ? 'bg-primary' : 'bg-outline/30'}`}
               >
-                <Sun className="w-4 h-4" /> Light
-              </button>
-              <button 
-                onClick={() => theme === 'light' && toggleTheme()}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[13px] font-bold transition-all ${theme === 'dark' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-              >
-                <Moon className="w-4 h-4" /> Dark
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${defaultEncryption ? 'translate-x-6' : 'translate-x-1'}`}/>
               </button>
             </div>
           </div>
         </section>
 
-        {/* ── 4. DATA & PRIVACY SECTION ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[24px] border border-outline/30 shadow-subtle p-7 flex flex-col items-start">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-5">
-              <FileText className="w-6 h-6" />
+        {/* ── 3. DATA EXPORT ── */}
+        <section className="bg-white rounded-2xl border border-outline/20 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-outline/10">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <Download className="w-4 h-4 text-indigo-500"/>
             </div>
-            <h4 className="text-[16px] font-bold text-on-surface mb-2">Export as PDF</h4>
-            <p className="text-[13px] text-on-surface-variant leading-relaxed mb-6">Download a beautiful, printable PDF version of your journal.</p>
-            <button 
-              onClick={() => handleExport('pdf')}
-              disabled={exportLoading !== null}
-              className="mt-auto w-full py-3.5 rounded-xl border border-outline text-[13px] font-bold text-on-surface hover:bg-surface-variant transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {exportLoading === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Download PDF
-            </button>
+            <div>
+              <h2 className="text-[14px] font-black text-on-surface">Export Journal</h2>
+              <p className="text-[12px] text-on-surface-variant/60">Download your entire journal in your preferred format.</p>
+            </div>
           </div>
 
-          <div className="bg-white rounded-[24px] border border-outline/30 shadow-subtle p-7 flex flex-col items-start">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5">
-              <Code className="w-6 h-6" />
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* PDF */}
+              <div className="flex items-center gap-4 p-5 rounded-xl border border-outline/15 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group">
+                <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                  <FileText className="w-5 h-5 text-indigo-500"/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold text-on-surface">PDF Export</p>
+                  <p className="text-[12px] text-on-surface-variant/60">Printable, beautifully formatted</p>
+                </div>
+                <button
+                  onClick={() => handleExport('pdf')} disabled={exportLoading !== null}
+                  className="flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-full text-[12px] font-bold hover:bg-indigo-700 transition-all disabled:opacity-40 flex-shrink-0"
+                >
+                  {exportLoading === 'pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Download className="w-3.5 h-3.5"/>}
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+              </div>
+
+              {/* HTML */}
+              <div className="flex items-center gap-4 p-5 rounded-xl border border-outline/15 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group">
+                <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
+                  <Code className="w-5 h-5 text-emerald-500"/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold text-on-surface">HTML Export</p>
+                  <p className="text-[12px] text-on-surface-variant/60">Portable web archive format</p>
+                </div>
+                <button
+                  onClick={() => handleExport('html')} disabled={exportLoading !== null}
+                  className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-full text-[12px] font-bold hover:bg-emerald-700 transition-all disabled:opacity-40 flex-shrink-0"
+                >
+                  {exportLoading === 'html' ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Download className="w-3.5 h-3.5"/>}
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+              </div>
             </div>
-            <h4 className="text-[16px] font-bold text-on-surface mb-2">Export as HTML</h4>
-            <p className="text-[13px] text-on-surface-variant leading-relaxed mb-6">Get a portable HTML version of your journal for web archiving.</p>
-            <button 
-              onClick={() => handleExport('html')}
-              disabled={exportLoading !== null}
-              className="mt-auto w-full py-3.5 rounded-xl border border-outline text-[13px] font-bold text-on-surface hover:bg-surface-variant transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          </div>
+        </section>
+
+        {/* ── 4. DANGER ZONE ── */}
+        <section className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-rose-100/60">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+              <LogOut className="w-4 h-4 text-rose-500"/>
+            </div>
+            <div>
+              <h2 className="text-[14px] font-black text-on-surface">Session</h2>
+              <p className="text-[12px] text-on-surface-variant/60">Sign out of your account.</p>
+            </div>
+          </div>
+          <div className="px-6 py-5 flex items-center justify-between gap-4">
+            <p className="text-[13px] text-on-surface-variant/70 leading-relaxed">
+              You will be redirected to the login page. Your data is safely stored.
+            </p>
+            <button
+              onClick={logout}
+              className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border border-rose-200 text-rose-600 text-[13px] font-bold hover:bg-rose-50 transition-all"
             >
-              {exportLoading === 'html' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Download HTML
+              <LogOut className="w-3.5 h-3.5"/> Sign Out
             </button>
           </div>
-        </div>
+        </section>
 
       </div>
     </div>

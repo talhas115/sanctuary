@@ -15,7 +15,9 @@ import {
   ChevronRight,
   MoreVertical,
   Share2,
-  ExternalLink
+  ExternalLink,
+  X,
+  SlidersHorizontal
 } from 'lucide-react';
 import api from '../services/api';
 import { decryptContent } from '../utils/crypto';
@@ -37,7 +39,26 @@ const EntryList = () => {
   const [tagFilter, setTagFilter] = useState('all');
   const [sortBy, setSortBy] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false); // mobile filter drawer
   const itemsPerPage = 5;
+
+  // Count active filters for badge
+  const activeFilterCount = (dateFilter !== 'all' ? 1 : 0) + (tagFilter !== 'all' ? 1 : 0);
+
+  // Derive top 5 tags from actual entries, sorted by frequency
+  const quickTags = useMemo(() => {
+    const tagCounts = {};
+    entries.forEach(entry => {
+      entry.tags?.forEach(tag => {
+        const name = typeof tag === 'object' ? tag.name : tag;
+        if (name) tagCounts[name] = (tagCounts[name] || 0) + 1;
+      });
+    });
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name]) => name);
+  }, [entries]);
 
   useEffect(() => {
     fetchEntries();
@@ -106,40 +127,71 @@ const EntryList = () => {
     <div className="h-full overflow-hidden flex flex-col animate-in fade-in duration-700 bg-[#F9FAFB]">
       
       {/* ── HEADER SECTION: Search & Title ── */}
-      <header className="flex-shrink-0 bg-white border-b border-outline/10 px-8 py-8 lg:px-12">
+      <header className="flex-shrink-0 bg-white border-b border-outline/10 px-5 py-5 lg:px-12 lg:py-8">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-[32px] font-bold text-on-surface tracking-tight leading-none">Journal Entries</h1>
-              <p className="text-[16px] text-on-surface-variant mt-2">Documenting your journey, one thought at a time.</p>
+              <h1 className="text-[24px] lg:text-[32px] font-bold text-on-surface tracking-tight leading-none">Journal Entries</h1>
+              <p className="text-[13px] lg:text-[16px] text-on-surface-variant mt-1">Documenting your journey, one thought at a time.</p>
             </div>
             
-            <div className="relative flex items-center gap-3">
-              <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Sort by</span>
-              <div className="relative group">
-                <select 
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-surface-variant/30 border border-outline/10 px-4 pr-10 py-2 rounded-full text-[13px] font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
-                >
-                  <option value="desc">Date (Descending)</option>
-                  <option value="asc">Date (Ascending)</option>
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
+            <div className="flex items-center gap-2">
+              {/* Mobile filter toggle */}
+              <button
+                onClick={() => setShowFilters(true)}
+                className="md:hidden relative flex items-center gap-1.5 px-3 py-2 rounded-full border border-outline/20 bg-white text-[12px] font-bold text-on-surface-variant hover:border-primary/30 hover:text-primary transition-all"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Desktop sort */}
+              <div className="hidden md:flex items-center gap-3">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Sort by</span>
+                <div className="relative group">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none bg-surface-variant/30 border border-outline/10 px-4 pr-10 py-2 rounded-full text-[13px] font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                  >
+                    <option value="desc">Date (Descending)</option>
+                    <option value="asc">Date (Ascending)</option>
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Large Local Search Bar */}
-          <div className="relative group max-w-2xl">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-outline-variant transition-colors group-focus-within:text-primary" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              placeholder="Search entries, keywords, or patterns..."
-              className="w-full bg-surface-variant/30 text-on-surface pl-14 pr-6 py-4 rounded-[20px] border border-outline/10 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium"
-            />
+          {/* Search Bar */}
+          <div className="flex items-center gap-2">
+            <div className="relative group flex-1 max-w-2xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline-variant transition-colors group-focus-within:text-primary" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                placeholder="Search entries..."
+                className="w-full bg-surface-variant/30 text-on-surface pl-11 pr-5 py-3 rounded-[16px] border border-outline/10 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-[14px]"
+              />
+            </div>
+            {/* Mobile sort inline */}
+            <div className="md:hidden relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-surface-variant/30 border border-outline/10 pl-3 pr-7 py-3 rounded-[16px] text-[12px] font-bold text-on-surface focus:outline-none transition-all cursor-pointer"
+              >
+                <option value="desc">↓ New</option>
+                <option value="asc">↑ Old</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-on-surface-variant pointer-events-none" />
+            </div>
           </div>
         </div>
       </header>
@@ -182,7 +234,7 @@ const EntryList = () => {
                 <Tag className="w-3.5 h-3.5" /> Quick Tags
               </h3>
               <div className="flex flex-wrap gap-2">
-                {['Reflection', 'Work', 'Growth', 'Health', 'Travel'].map(tag => (
+                {quickTags.length > 0 ? quickTags.map(tag => (
                   <button
                     key={tag}
                     onClick={() => { setTagFilter(tag === tagFilter ? 'all' : tag); setCurrentPage(1); }}
@@ -194,7 +246,11 @@ const EntryList = () => {
                   >
                     {tag}
                   </button>
-                ))}
+                )) : (
+                  <p className="text-[11px] text-on-surface-variant/40 italic">
+                    Add tags to entries to see them here.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -322,13 +378,83 @@ const EntryList = () => {
       </div>
 
       {/* FLOATING ACTION BUTTON */}
-      <Link 
+      <Link
         to="/entries/new"
-        className="fixed bottom-10 right-10 w-16 h-16 bg-primary text-white rounded-full shadow-elevated flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group"
+        className="fixed bottom-6 right-6 md:bottom-10 md:right-10 w-14 h-14 md:w-16 md:h-16 bg-primary text-white rounded-full shadow-elevated flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
         title="Create New Entry"
       >
-        <PenLine className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+        <PenLine className="w-6 h-6 md:w-7 md:h-7 group-hover:rotate-12 transition-transform" />
       </Link>
+
+      {/* MOBILE FILTER DRAWER */}
+      {showFilters && (
+        <div className="md:hidden fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowFilters(false)} />
+          <div className="relative w-full bg-[#F9FAFB] rounded-t-3xl max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+            <div className="sticky top-0 bg-white rounded-t-3xl border-b border-outline/10 flex items-center justify-between px-5 py-4 z-10">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[15px] font-black text-on-surface">Filters</h3>
+                {activeFilterCount > 0 && (
+                  <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full">{activeFilterCount} active</span>
+                )}
+              </div>
+              <button onClick={() => setShowFilters(false)} className="p-1.5 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-5 py-6 space-y-8">
+              {/* Date Range */}
+              <div className="space-y-4">
+                <h4 className="text-[11px] font-black text-on-surface-variant/50 tracking-[0.2em] uppercase flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5" /> Date Range
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {[{ label: 'Last 7 days', value: '7days' }, { label: 'Last 30 days', value: '30days' }, { label: 'All time', value: 'all' }].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => { setDateFilter(opt.value); setCurrentPage(1); }}
+                      className={`px-4 py-2 rounded-full text-[13px] font-bold transition-all border ${dateFilter === opt.value ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-on-surface-variant border-outline/20 hover:border-primary/30 hover:text-primary'}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Tags */}
+              <div className="space-y-4">
+                <h4 className="text-[11px] font-black text-on-surface-variant/50 tracking-[0.2em] uppercase flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5" /> Quick Tags
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {quickTags.length > 0 ? quickTags.map(tag => (
+                    <button key={tag}
+                      onClick={() => { setTagFilter(tag === tagFilter ? 'all' : tag); setCurrentPage(1); }}
+                      className={`px-4 py-2 rounded-full text-[13px] font-bold transition-all border ${tagFilter === tag ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-on-surface-variant border-outline/20 hover:border-primary/30 hover:text-primary'}`}>
+                      {tag}
+                    </button>
+                  )) : (
+                    <p className="text-[13px] text-on-surface-variant/40 italic">Add tags to entries to see them here.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pb-2">
+                <button
+                  onClick={() => { setDateFilter('all'); setTagFilter('all'); setSearchQuery(''); setCurrentPage(1); }}
+                  className="flex-1 py-3 rounded-xl text-[13px] font-black text-primary border border-primary/20 hover:bg-primary/5 transition-all">
+                  Reset All
+                </button>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="flex-1 py-3 rounded-xl text-[13px] font-black bg-primary text-white shadow-sm hover:bg-primary/90 transition-all">
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

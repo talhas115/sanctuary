@@ -1,171 +1,230 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Tag as TagIcon, 
-  Hash, 
-  TrendingUp, 
-  PieChart, 
-  Layers, 
-  CircleDot,
-  ArrowUpRight
+import {
+  Hash,
+  TrendingUp,
+  Layers,
+  ArrowUpRight,
+  Tag as TagIcon,
+  BookOpen,
+  Sparkles,
+  BarChart3,
 } from 'lucide-react';
 import { useEntryStore } from '../store/entryStore';
+import { useNavigate } from 'react-router-dom';
 
 /**
- * Stitch Tag Management UI - Taxonomy Dashboard
- * FINAL Layout Corrections: Fixed grid proportions, header structure, and element cleanup.
+ * Tags Page — Premium Taxonomy Dashboard
+ * Clean 3-section layout: Hero header → Tag grid → Insights strip
  */
-
 const TagsPage = () => {
   const { entries, fetchEntries, isLoading } = useEntryStore();
-  
-  useEffect(() => {
-    fetchEntries();
-  }, [fetchEntries]);
+  const navigate = useNavigate();
 
-  // Extract tags and calculate entry counts
+  useEffect(() => { fetchEntries(); }, [fetchEntries]);
+
+  // Build tag stats sorted by count desc
   const tagStats = useMemo(() => {
-    const statsMap = {};
+    const map = {};
     entries.forEach(entry => {
       entry.tags?.forEach(tag => {
-        const tagName = typeof tag === 'object' ? tag.name : tag;
-        statsMap[tagName] = (statsMap[tagName] || 0) + 1;
+        const name = typeof tag === 'object' ? tag.name : tag;
+        if (name) map[name] = (map[name] || 0) + 1;
       });
     });
-    
-    return Object.entries(statsMap)
+    return Object.entries(map)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
   }, [entries]);
 
-  const mostActiveTag = tagStats[0] || null;
-  const highestGrowthTag = tagStats.length > 1 ? tagStats[1] : (tagStats[0] || null);
+  const totalTagUses = tagStats.reduce((sum, t) => sum + t.count, 0);
+  const mostActive   = tagStats[0] || null;
+  const secondActive = tagStats[1] || null;
 
-  // Soft pastel colors for cards
-  const cardColors = [
-    { bg: 'bg-indigo-50/50', border: 'border-indigo-100', text: 'text-indigo-600', icon: 'bg-indigo-100/50' },
-    { bg: 'bg-emerald-50/50', border: 'border-emerald-100', text: 'text-emerald-600', icon: 'bg-emerald-100/50' },
-    { bg: 'bg-rose-50/50', border: 'border-rose-100', text: 'text-rose-600', icon: 'bg-rose-100/50' },
-    { bg: 'bg-amber-50/50', border: 'border-amber-100', text: 'text-amber-600', icon: 'bg-amber-100/50' },
-    { bg: 'bg-sky-50/50', border: 'border-sky-100', text: 'text-sky-600', icon: 'bg-sky-100/50' },
-    { bg: 'bg-violet-50/50', border: 'border-violet-100', text: 'text-violet-600', icon: 'bg-violet-100/50' },
+  // Colour palette — cycles through tags
+  const palettes = [
+    { bg: '#EEF2FF', border: '#C7D2FE', text: '#4F46E5', bar: '#818CF8' },
+    { bg: '#F0FDF4', border: '#BBF7D0', text: '#16A34A', bar: '#4ADE80' },
+    { bg: '#FFF7ED', border: '#FED7AA', text: '#EA580C', bar: '#FB923C' },
+    { bg: '#FDF4FF', border: '#E9D5FF', text: '#9333EA', bar: '#C084FC' },
+    { bg: '#FFF1F2', border: '#FECDD3', text: '#E11D48', bar: '#FB7185' },
+    { bg: '#F0F9FF', border: '#BAE6FD', text: '#0284C7', bar: '#38BDF8' },
+    { bg: '#FEFCE8', border: '#FEF08A', text: '#CA8A04', bar: '#FACC15' },
+    { bg: '#F0FDFA', border: '#99F6E4', text: '#0D9488', bar: '#2DD4BF' },
   ];
 
   return (
-    <div className="flex-1 h-full overflow-y-auto px-6 py-6 animate-in fade-in duration-700">
-      <div className="max-w-[1280px] mx-auto space-y-16">
-        
-        {/* ── 1. HEADER SECTION: 2-Column Grid ── */}
-        <header className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* Left Side: Text content */}
-          <div>
-            <p className="text-[11px] font-black text-on-surface-variant/40 tracking-[0.2em] uppercase mb-2">Taxonomy</p>
-            <h1 className="text-[40px] font-bold text-on-surface tracking-tight leading-tight mb-4">
-              Organize Your Thoughts
-            </h1>
-            <p className="text-[16px] text-on-surface-variant leading-relaxed max-w-2xl">
-              Define the underlying structure of your reflections. Use tags to bridge themes across different entries and visualize the patterns in your narrative.
-            </p>
-          </div>
+    <div className="h-full overflow-y-auto bg-[#F4F5FA]">
+      <div className="max-w-[1100px] mx-auto px-5 py-8 lg:px-10 lg:py-10 space-y-8">
 
-          {/* Right Side: Stat Card */}
-          <div className="flex justify-start md:justify-end">
-            <div className="bg-white p-6 rounded-[24px] border border-outline/30 shadow-subtle flex items-center gap-5 min-w-[240px]">
-              <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
-                <Layers className="w-7 h-7" />
+        {/* ── SECTION 1: HERO HEADER ── */}
+        <div
+          className="relative rounded-3xl overflow-hidden p-8 lg:p-12"
+          style={{ background: 'linear-gradient(135deg, #2A2DC0 0%, #4648D4 55%, #7B6EF5 100%)' }}
+        >
+          {/* Dot grid texture */}
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.06,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}/>
+
+          {/* Blurred blobs */}
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', filter: 'blur(40px)' }}/>
+          <div style={{ position: 'absolute', bottom: '-30px', left: '30%', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', filter: 'blur(30px)' }}/>
+
+          <div className="relative z-10">
+            {/* Text block */}
+            <div className="mb-6">
+              <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.25em] mb-2">Taxonomy</p>
+              <h1 className="text-white text-[26px] lg:text-[36px] font-black tracking-tight leading-tight mb-2">
+                Your Tag Universe
+              </h1>
+              <p className="text-white/60 text-[13px] lg:text-[14px] leading-relaxed" style={{ maxWidth: '480px' }}>
+                Discover the themes shaping your narrative. Every tag tells a story about what matters most to you.
+              </p>
+            </div>
+
+            {/* Stat pills — always in a row, wraps on very small screens */}
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-2xl px-5 py-3 flex items-center gap-3">
+                <Layers className="w-4 h-4 text-white/60 flex-shrink-0"/>
+                <div>
+                  <p className="text-white/55 text-[9px] font-black uppercase tracking-widest leading-none mb-0.5">Unique Tags</p>
+                  <p className="text-white text-[22px] font-black leading-none tabular-nums">{tagStats.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[12px] font-black text-on-surface-variant/50 tracking-wider uppercase">Total Tags</p>
-                <p className="text-[32px] font-bold text-on-surface leading-none tabular-nums">{tagStats.length}</p>
+              <div className="bg-white/10 border border-white/15 backdrop-blur-sm rounded-2xl px-5 py-3 flex items-center gap-3">
+                <BookOpen className="w-4 h-4 text-white/60 flex-shrink-0"/>
+                <div>
+                  <p className="text-white/55 text-[9px] font-black uppercase tracking-widest leading-none mb-0.5">Total Uses</p>
+                  <p className="text-white text-[22px] font-black leading-none tabular-nums">{totalTagUses}</p>
+                </div>
               </div>
             </div>
           </div>
-        </header>
+        </div>
 
-        {/* ── 2. TAG GRID SECTION: Full Width Expansion ── */}
-        <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {tagStats.map((tag, idx) => {
-              const style = cardColors[idx % cardColors.length];
-              return (
-                <div 
-                  key={tag.name}
-                  className={`${style.bg} ${style.border} border p-6 rounded-xl shadow-sm hover:shadow-subtle transition-all cursor-pointer group relative overflow-hidden`}
-                >
-                  <div className="flex justify-between items-start relative z-10">
-                    <div>
-                      <p className={`text-[15px] font-bold ${style.text} mb-1 flex items-center gap-1`}>
-                        <Hash className="w-3.5 h-3.5 opacity-60" />
-                        {tag.name}
-                      </p>
-                      <div className="flex items-baseline gap-1.5 mt-8">
-                        <span className="text-[48px] font-bold text-on-surface leading-none tracking-tighter tabular-nums">
+        {/* ── SECTION 2: TAG GRID ── */}
+        {isLoading ? (
+          <div className="text-center py-20 text-on-surface-variant/40 italic text-sm">Loading tags...</div>
+        ) : tagStats.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-outline/20">
+            <TagIcon className="w-10 h-10 text-outline/30 mx-auto mb-4"/>
+            <p className="text-[16px] font-bold text-on-surface mb-1">No tags yet</p>
+            <p className="text-[13px] text-on-surface-variant/60 mb-5">Start tagging your journal entries to see them here.</p>
+            <button
+              onClick={() => navigate('/entries/new')}
+              className="bg-primary text-white px-5 py-2.5 rounded-full text-[13px] font-bold hover:bg-primary/90 transition-all shadow-md"
+            >
+              Write an Entry
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[18px] font-black text-on-surface tracking-tight">All Tags</h2>
+              <span className="text-[12px] text-on-surface-variant/50 font-semibold">{tagStats.length} unique {tagStats.length === 1 ? 'tag' : 'tags'}</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {tagStats.map((tag, idx) => {
+                const pal = palettes[idx % palettes.length];
+                const pct = totalTagUses > 0 ? Math.round((tag.count / totalTagUses) * 100) : 0;
+                const maxCount = tagStats[0]?.count || 1;
+                const barWidth = Math.max(8, Math.round((tag.count / maxCount) * 100));
+
+                return (
+                  <div
+                    key={tag.name}
+                    className="group relative bg-white rounded-2xl border p-5 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden"
+                    style={{ borderColor: pal.border }}
+                    onClick={() => navigate(`/entries?tag=${encodeURIComponent(tag.name)}`)}
+                  >
+                    {/* Subtle colour wash on hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl"
+                      style={{ background: pal.bg }}/>
+
+                    <div className="relative z-10">
+                      {/* Tag name row */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: pal.bg, border: `1.5px solid ${pal.border}` }}>
+                            <Hash className="w-3.5 h-3.5" style={{ color: pal.text }}/>
+                          </div>
+                          <span className="text-[14px] font-bold text-on-surface truncate" style={{}}>{tag.name}</span>
+                        </div>
+                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" style={{ color: pal.text }}/>
+                      </div>
+
+                      {/* Count + percentage */}
+                      <div className="flex items-baseline justify-between mb-3">
+                        <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: pal.text }}>
                           {tag.count}
                         </span>
-                        <span className="text-[11px] font-black text-on-surface-variant/40 tracking-widest uppercase">
-                          Entries
-                        </span>
+                        <span className="text-[11px] font-bold text-on-surface-variant/50">{pct}% of uses</span>
                       </div>
-                    </div>
-                    
-                    <div className={`w-10 h-10 rounded-xl ${style.icon} flex items-center justify-center ${style.text} group-hover:scale-110 transition-transform`}>
-                       <CircleDot className="w-5 h-5" />
+
+                      {/* Progress bar */}
+                      <div className="h-1.5 rounded-full bg-outline/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${barWidth}%`, background: pal.bar }}
+                        />
+                      </div>
+
+                      <p className="text-[11px] text-on-surface-variant/50 mt-2 font-medium">
+                        {tag.count === 1 ? '1 entry' : `${tag.count} entries`}
+                      </p>
                     </div>
                   </div>
-                  
-                  {/* Subtle Background Decorative Accent */}
-                  <div className={`absolute -bottom-4 -right-4 w-24 h-24 rounded-full ${style.icon} blur-2xl opacity-40 group-hover:opacity-60 transition-opacity`} />
-                </div>
-              );
-            })}
-          </div>
-          
-          {tagStats.length === 0 && !isLoading && (
-            <div className="text-center py-24 bg-surface-variant/10 rounded-3xl border-2 border-dashed border-outline-variant/20 text-on-surface-variant/60 font-medium">
-              No tags discovered in your narrative yet.
+                );
+              })}
             </div>
-          )}
-        </section>
+          </div>
+        )}
 
-        {/* ── 3. INSIGHTS SECTION: Full Width Split ── */}
-        <section className="bg-white rounded-[32px] border border-outline/30 shadow-subtle overflow-hidden flex flex-col lg:grid lg:grid-cols-12">
-          <div className="lg:col-span-8 p-10 lg:p-14">
-            <p className="text-[11px] font-black text-primary tracking-[0.2em] uppercase mb-3">Analysis</p>
-            <h2 className="text-[32px] font-bold text-on-surface tracking-tight mb-6">Insights</h2>
-            <p className="text-[17px] text-on-surface-variant leading-relaxed mb-10 max-w-3xl">
-              Your tag universe visualizes the interconnectedness of your reflections. By tracking the frequency and growth of themes, you can identify which areas of your life are currently taking center stage in your writing.
-            </p>
+        {/* ── SECTION 3: INSIGHTS STRIP ── */}
+        {tagStats.length >= 1 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-              <div className="space-y-1">
-                <p className="text-[11px] font-black text-on-surface-variant/50 tracking-wider uppercase">Most Active</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-[24px] font-bold text-on-surface">#{mostActiveTag?.name || 'None'}</span>
-                  <div className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-[11px] font-bold flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> Core Theme
-                  </div>
-                </div>
+            {/* Most Active */}
+            <div className="bg-white rounded-2xl border border-outline/20 p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-emerald-500"/>
               </div>
-              
-              <div className="space-y-1">
-                <p className="text-[11px] font-black text-on-surface-variant/50 tracking-wider uppercase">High Growth</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-[24px] font-bold text-on-surface">#{highestGrowthTag?.name || 'None'}</span>
-                  <div className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-[11px] font-bold flex items-center gap-1.5">
-                    <ArrowUpRight className="w-3.5 h-3.5" /> Rising
-                  </div>
-                </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-0.5">Most Active</p>
+                <p className="text-[15px] font-black text-on-surface truncate">#{mostActive?.name || '—'}</p>
+                <p className="text-[11px] text-on-surface-variant/60 font-medium">{mostActive?.count || 0} entries</p>
               </div>
             </div>
-          </div>
 
-          <div className="lg:col-span-4 bg-surface-variant/40 flex items-center justify-center p-12 border-t lg:border-t-0 lg:border-l border-outline/10">
-            <div className="w-full max-w-[240px] aspect-square bg-white rounded-full shadow-elevated flex items-center justify-center relative p-10 group">
-              <PieChart className="w-20 h-20 text-primary/20 group-hover:text-primary/40 transition-colors" />
-              <div className="absolute inset-4 border-[16px] border-primary/5 rounded-full" />
-              <div className="absolute inset-8 border-[12px] border-primary/10 border-t-primary rounded-full animate-[spin_12s_linear_infinite]" />
+            {/* Rising Theme */}
+            <div className="bg-white rounded-2xl border border-outline/20 p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-indigo-500"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-0.5">Rising Theme</p>
+                <p className="text-[15px] font-black text-on-surface truncate">#{secondActive?.name || mostActive?.name || '—'}</p>
+                <p className="text-[11px] text-on-surface-variant/60 font-medium">{(secondActive || mostActive)?.count || 0} entries</p>
+              </div>
+            </div>
+
+            {/* Coverage */}
+            <div className="bg-white rounded-2xl border border-outline/20 p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-5 h-5 text-amber-500"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-0.5">Total Uses</p>
+                <p className="text-[15px] font-black text-on-surface">{totalTagUses} tag applications</p>
+                <p className="text-[11px] text-on-surface-variant/60 font-medium">across {entries.length} entries</p>
+              </div>
             </div>
           </div>
-        </section>
+        )}
 
       </div>
     </div>

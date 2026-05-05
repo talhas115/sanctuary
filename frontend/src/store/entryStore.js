@@ -86,7 +86,7 @@ export const useEntryStore = create((set, get) => ({
       
       set({ 
         stats: statsRes.data,
-        streak: streakRes.data.currentStreak || 0,
+        streak: streakRes.data.streak || 0,
         heatmap: heatmapRes.data,
         isStatsLoading: false 
       });

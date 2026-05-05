@@ -41,7 +41,7 @@ Rule:
 | KPI | Description | Status | Notes |
 |-----|------------|--------|------|
 | 14 | Keyword search | ✅ | tsvector indexing implemented |
-| 15 | Tag filter | ✅ | Filter implemented |
+| 15 | Tag filter | ✅ | Filter implemented; Quick Tags now driven by real top-5 tags from entries |
 | 16 | Date filter | ✅ | Filter implemented |
 | 17 | Calendar view | ✅ | Backend grouping implemented |
 | 18 | Full-text search | ✅ | PostgreSQL tsvector via EF Core |
@@ -52,8 +52,8 @@ Rule:
 
 | KPI | Description | Status | Notes |
 |-----|------------|--------|------|
-| 19 | Dashboard stats | ✅ | Calculated server-side |
-| 20 | Streak | ✅ | Calculated server-side based on Entry date |
+| 19 | Dashboard stats | ✅ | Calculated server-side; Tags count fixed (uses topTags.length) |
+| 20 | Streak | ✅ | Fixed: frontend now reads `streak` field from API response |
 | 21 | Word count | ✅ | Calculated and returned dynamically |
 | 22 | Heatmap | ✅ | Grouped by Date implemented |
 
@@ -74,9 +74,9 @@ Rule:
 
 | KPI | Description | Status | Notes |
 |-----|------------|--------|------|
-| 27 | Mobile editor | ❌ | |
-| 28 | Responsive calendar | ❌ | |
-| 29 | Touch navigation | ❌ | |
+| 27 | Mobile editor | ✅ | Responsive rewrite: mobile toolbar, slide-up metadata drawer, full-width writing canvas |
+| 28 | Responsive calendar | ✅ | Redesigned: 50/50 desktop split, mobile tab-switch, viewport-fit, no page scroll |
+| 29 | Touch navigation | ✅ | Mobile tab bar + back button added to calendar |
 
 ---
 
@@ -99,5 +99,5 @@ Rule:
 | 35 | Search test | ✅ | Tested in SearchTests |
 | 36 | Privacy test | ✅ | Tested in PublicAccessTests |
 | 37 | All tests pass | ✅ | 15/15 tests passed |
-| 38 | README | ❌ | Not in scope for current phase |
+| 38 | README | ✅ | Full README with install guide, API docs, test instructions, Docker setup |
 | 39 | API docs | ✅ | Swagger generated on startup |

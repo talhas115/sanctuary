@@ -121,8 +121,12 @@ const AppLayout = () => {
                   ${isActive ? 'text-primary' : 'text-on-surface-variant'}
                 `}
               >
-                <item.icon className={`w-5 h-5 ${isActive ? 'fill-primary/10' : ''}`} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={`w-5 h-5 ${isActive ? 'fill-primary/10' : ''}`} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>

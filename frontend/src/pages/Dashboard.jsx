@@ -102,8 +102,8 @@ const Dashboard = () => {
             </div>
           </div>
           <div>
-            <p className="text-[32px] font-bold text-on-surface leading-none">{stats?.totalTags || 0}</p>
-            <p className="text-[12px] uppercase text-on-surface-variant font-medium tracking-wider mt-1">Tags / Categories</p>
+            <p className="text-[32px] font-bold text-on-surface leading-none">{stats?.topTags?.length ?? 0}</p>
+            <p className="text-[12px] uppercase text-on-surface-variant font-medium tracking-wider mt-1">Unique Tags</p>
           </div>
         </div>
       </div>

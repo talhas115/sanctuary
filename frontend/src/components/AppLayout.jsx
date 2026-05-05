@@ -42,9 +42,9 @@ const AppLayout = () => {
   const hideNavbar = location.pathname.includes('/entries/') && location.pathname !== '/entries';
 
   return (
-    <div className="min-h-screen bg-background flex font-sans overflow-hidden h-screen">
-      {/* Left Sidebar - 240px Width, Light Gray Background */}
-      <aside className="w-[240px] flex-shrink-0 bg-background border-r border-outline flex flex-col z-20">
+    <div className="min-h-screen bg-background flex font-sans overflow-hidden h-screen flex-col md:flex-row">
+      {/* Left Sidebar - Hidden on mobile, visible on MD+ screens */}
+      <aside className="hidden md:flex w-[240px] flex-shrink-0 bg-background border-r border-outline flex-col z-20">
         <div className="p-lg">
           <div className="flex items-center gap-sm mb-xl px-sm">
             <div className="w-8 h-8 bg-primary rounded-[8px] flex items-center justify-center">
@@ -84,16 +84,19 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Column */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Top Navbar — hidden on editor/detail pages which have their own navigation */}
         {!hideNavbar && (
-          <header className="h-[64px] bg-background border-b border-outline flex items-center justify-between px-lg flex-shrink-0">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-on-surface">{getPageTitle()}</h1>
+          <header className="h-[56px] md:h-[64px] bg-background border-b border-outline flex items-center justify-between px-md md:px-lg flex-shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Mobile Branding - only visible when not hideNavbar */}
+              <div className="md:hidden w-7 h-7 bg-primary rounded-md flex items-center justify-center">
+                <BookText className="text-white w-4 h-4" />
+              </div>
+              <h1 className="text-lg md:text-xl font-semibold text-on-surface">{getPageTitle()}</h1>
             </div>
 
             <div className="flex items-center gap-lg">
-              {/* Note: Specific pages like EntryList handle their own localized search/actions for better context */}
               <div className="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant text-xs font-bold">
                 {user?.displayName?.charAt(0) || 'U'}
               </div>
@@ -105,6 +108,25 @@ const AppLayout = () => {
         <main className="flex-1 overflow-hidden relative">
           <Outlet />
         </main>
+
+        {/* Mobile Bottom Navigation - Visible only on mobile */}
+        {!hideNavbar && (
+          <nav className="md:hidden flex h-[64px] bg-background border-t border-outline flex-shrink-0 px-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => `
+                  flex-1 flex flex-col items-center justify-center gap-1 transition-colors
+                  ${isActive ? 'text-primary' : 'text-on-surface-variant'}
+                `}
+              >
+                <item.icon className={`w-5 h-5 ${isActive ? 'fill-primary/10' : ''}`} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
       </div>
     </div>
   );

@@ -96,7 +96,7 @@ const EntryEditor = () => {
     fetchAndSetContent();
   }, [editor]);
 
-  const handleSave = async () => {
+  const handleSave = async (isAutoSave = false) => {
     if (!title.trim() && !editor?.getText().trim()) return;
     setIsSaving(true);
     try {
@@ -120,9 +120,24 @@ const EntryEditor = () => {
       }
       setLastSaved(new Date());
       setShowSaveMessage(true);
-      setTimeout(() => { setShowSaveMessage(false); navigate('/entries'); }, 1500);
+      setTimeout(() => { setShowSaveMessage(false); if (!isAutoSave) navigate('/entries'); }, 1500);
     } catch (err) { console.error(err); } finally { setIsSaving(false); }
   };
+
+  // Auto-save logic
+  useEffect(() => {
+    if (!editor || !title.trim()) return;
+    
+    const timer = setTimeout(() => {
+      // Only auto-save if something has changed since last save
+      // For simplicity, we just save every 30 seconds if there's content
+      if (isEditing) {
+        handleSave(true);
+      }
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [title, editor?.getHTML()]);
 
   const handleTrash = async () => {
     if (!isEditing) { navigate('/entries'); return; }
@@ -169,13 +184,13 @@ const EntryEditor = () => {
         </div>
       )}
 
-      <div className="flex w-full max-w-[1020px] gap-5 h-full">
+      <div className="flex flex-col lg:flex-row w-full max-w-[1020px] gap-5 h-full">
 
         {/* ══════════════ CENTER WRITING CANVAS ══════════════
             flex-col card: header row is PINNED, content scrolls */}
         <div
           className="flex-1 flex flex-col bg-white rounded-2xl border border-outline/20 shadow-sm overflow-hidden"
-          style={{ maxHeight: 'calc(100vh - 128px)' }}
+          style={{ maxHeight: '100%' }}
         >
           {/* ── PINNED HEADER — always visible ── */}
           <div className="flex-shrink-0 flex items-center justify-between px-7 py-2.5 border-b border-outline/15 bg-white z-10">
@@ -195,8 +210,8 @@ const EntryEditor = () => {
             </div>
 
             {/* Right: toolbar capsule + page actions */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-0.5 bg-surface-variant/50 rounded-full px-2 py-1">
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
+              <div className="flex items-center gap-0.5 bg-surface-variant/50 rounded-full px-2 py-1 flex-shrink-0">
                 {[
                   { action: () => editor.chain().focus().toggleBold().run(), active: editor?.isActive('bold'), icon: <BoldIcon className="w-[14px] h-[14px]" />, title: 'Bold' },
                   { action: () => editor.chain().focus().toggleItalic().run(), active: editor?.isActive('italic'), icon: <ItalicIcon className="w-[14px] h-[14px]" />, title: 'Italic' },
@@ -223,7 +238,7 @@ const EntryEditor = () => {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button onClick={toggleTheme} title={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
                   className="w-8 h-8 rounded-full bg-white border border-outline/20 shadow-sm flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary/30 transition-all">
                   {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
@@ -262,8 +277,8 @@ const EntryEditor = () => {
 
         {/* ══════════════ RIGHT METADATA PANEL ══════════════ */}
         <div
-          className="w-[260px] flex-shrink-0 flex flex-col gap-6 overflow-y-auto"
-          style={{ maxHeight: 'calc(100vh - 128px)' }}
+          className="w-full lg:w-[260px] flex-shrink-0 flex flex-col gap-6 overflow-y-auto lg:pb-0 pb-10"
+          style={{ maxHeight: '100%' }}
         >
 
           {/* ENTRY DATE */}

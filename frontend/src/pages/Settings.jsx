@@ -96,21 +96,32 @@ const Settings = () => {
 
   // Handle Journal Export
   const handleExport = async (format) => {
+    // Basic confirmation for large datasets (simplified check)
+    if (user?.entryCount > 500) {
+      if (!window.confirm('You have a large journal. The export might take a minute. Continue?')) return;
+    }
+
     setExportLoading(format);
+    showFeedback('success', `Starting ${format.toUpperCase()} export... Please wait.`);
+    
     try {
       // Backend: ExportController [Route("api/[controller]")] -> api/export
-      const response = await api.get(`/export?format=${format}`, { responseType: 'blob' });
+      const response = await api.get(`/export?format=${format}`, { 
+        responseType: 'blob',
+        timeout: 60000 // 1 minute timeout for large exports
+      });
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `my_journal_export.${format}`);
+      link.setAttribute('download', `my_journal_export_${new Date().toISOString().split('T')[0]}.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       showFeedback('success', `Export as ${format.toUpperCase()} complete!`);
     } catch (err) {
       console.error(`Failed to export as ${format}`, err);
-      showFeedback('error', `Failed to export as ${format.toUpperCase()}.`);
+      showFeedback('error', `Failed to export as ${format.toUpperCase()}. Please try again.`);
     } finally {
       setExportLoading(null);
     }

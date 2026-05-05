@@ -22,7 +22,7 @@ const CalendarView = () => {
   const { entries, fetchEntries, isLoading } = useEntryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showTimeline, setShowTimeline] = useState(true);
+  const [showTimeline, setShowTimeline] = useState(false); // Default to false on mobile
 
   useEffect(() => {
     fetchEntries();
@@ -89,34 +89,34 @@ const CalendarView = () => {
     <div className="h-full flex flex-col md:flex-row overflow-hidden animate-in fade-in duration-700">
       
       {/* ── LEFT SIDE: CALENDAR GRID ── */}
-      <div className="flex-1 overflow-y-auto p-6 lg:p-10 flex flex-col items-center">
-        <div className="w-full max-w-[800px] bg-white rounded-[24px] shadow-subtle border border-outline/30 p-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 flex flex-col items-center">
+        <div className="w-full max-w-[800px] bg-white rounded-[24px] shadow-subtle border border-outline/30 p-4 md:p-8">
           
           {/* Header */}
           <header className="flex items-center justify-between mb-10">
             <div>
-              <h1 className="text-[28px] font-bold text-on-surface tracking-tight">
+              <h1 className="text-[22px] md:text-[28px] font-bold text-on-surface tracking-tight leading-tight">
                 {monthName} {year}
               </h1>
-              <p className="text-[14px] text-on-surface-variant font-medium mt-1">
-                {entriesThisMonthCount} memories captured this month
+              <p className="text-[12px] md:text-[14px] text-on-surface-variant font-medium mt-1">
+                {entriesThisMonthCount} memories captured
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <button 
                 onClick={handleGoToToday}
-                className="px-4 py-1.5 rounded-full border border-outline text-[13px] font-bold text-on-surface hover:bg-surface-variant transition-all"
+                className="px-3 md:px-4 py-1.5 rounded-full border border-outline text-[11px] md:text-[13px] font-bold text-on-surface hover:bg-surface-variant transition-all"
               >
                 Today
               </button>
               <div className="flex items-center bg-surface-variant/50 rounded-full p-1">
-                <button onClick={handlePrevMonth} className="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
-                  <ChevronLeft className="w-5 h-5" />
+                <button onClick={handlePrevMonth} className="p-1 md:p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
                 <div className="w-px h-3 bg-outline/50 mx-1" />
-                <button onClick={handleNextMonth} className="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
-                  <ChevronRight className="w-5 h-5" />
+                <button onClick={handleNextMonth} className="p-1 md:p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
             </div>
